@@ -122,7 +122,7 @@ impl FilterBlockReader {
         assert!(data.len() >= 5);
 
         let fbase = data[data.len() - 1] as u32;
-        let offset = u32::decode_fixed(&data[data.len() - 5..data.len() - 1]) as usize;
+        let offset = u32::decode_fixed(&data[data.len() - 5..data.len() - 1]).unwrap() as usize;
 
         FilterBlockReader {
             policy: pol,
@@ -140,7 +140,7 @@ impl FilterBlockReader {
     /// Returns the offset of the offset with index i.
     fn offset_of(&self, i: u32) -> usize {
         let offset_offset = self.offsets_offset + 4 * i as usize;
-        u32::decode_fixed(&self.block[offset_offset..offset_offset + 4]) as usize
+        u32::decode_fixed(&self.block[offset_offset..offset_offset + 4]).unwrap() as usize
     }
 
     /// blk_offset is the offset of the block containing key. Returns whether the key matches the

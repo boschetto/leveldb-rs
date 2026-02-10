@@ -157,8 +157,8 @@ impl<R: Read> LogReader<R> {
 
             self.blk_off += bytes_read;
 
-            checksum = u32::decode_fixed(&self.head_scratch[0..4]);
-            length = u16::decode_fixed(&self.head_scratch[4..6]);
+            checksum = u32::decode_fixed(&self.head_scratch[0..4]).unwrap();
+            length = u16::decode_fixed(&self.head_scratch[4..6]).unwrap();
             typ = self.head_scratch[6];
 
             dst.resize(dst_offset + length as usize, 0);

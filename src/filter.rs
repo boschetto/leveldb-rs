@@ -88,7 +88,7 @@ impl BloomPolicy {
         let mut h: u32 = BLOOM_SEED ^ (limit as u64 * m as u64) as u32;
 
         while ix + 4 <= limit {
-            let w = u32::decode_fixed(&data[ix..ix + 4]);
+            let w = u32::decode_fixed(&data[ix..ix + 4]).unwrap();
             ix += 4;
 
             h = (h as u64 + w as u64) as u32;

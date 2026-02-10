@@ -125,7 +125,7 @@ impl LdbIterator for MemtableIterator {
         if let Some((key_bytes, _val_bytes)) = self.skipmapiter.current() {
             let (keylen, keyoff, _, vallen, valoff) = parse_memtable_key(&key_bytes);
             let internal_key =
-                Bytes::copy_from_slice(&key_bytes[keyoff..keyoff + keylen + u64::required_space()]);
+                Bytes::copy_from_slice(&key_bytes[keyoff..keyoff + keylen + u64::ENCODED_SIZE]);
             let value = Bytes::copy_from_slice(&key_bytes[valoff..valoff + vallen]);
             Some((internal_key, value))
         } else {

@@ -41,7 +41,7 @@ impl Block {
     /// refcounted block contents as this block, meaning that if the iterator isn't released,
     /// the memory occupied by the block isn't, either)
     pub fn iter(&self) -> BlockIter {
-        let restarts = u32::decode_fixed(&self.block[self.block.len() - 4..]);
+        let restarts = u32::decode_fixed(&self.block[self.block.len() - 4..]).unwrap();
         let restart_offset = self.block.len() - 4 - 4 * restarts as usize;
 
         BlockIter {
@@ -97,7 +97,7 @@ pub struct BlockIter {
 impl BlockIter {
     /// Return the number of restarts in this block.
     fn number_restarts(&self) -> usize {
-        u32::decode_fixed(&self.block[self.block.len() - 4..]) as usize
+        u32::decode_fixed(&self.block[self.block.len() - 4..]).unwrap() as usize
     }
 
     /// Seek to restart point `ix`. After the seek, current() will return the entry at that restart
@@ -120,7 +120,7 @@ impl BlockIter {
     /// Return the offset that restart `ix` points to.
     fn get_restart_point(&self, ix: usize) -> usize {
         let restart = self.restarts_off + 4 * ix;
-        u32::decode_fixed(&self.block[restart..restart + 4]) as usize
+        u32::decode_fixed(&self.block[restart..restart + 4]).unwrap() as usize
     }
 
     /// The layout of an entry is

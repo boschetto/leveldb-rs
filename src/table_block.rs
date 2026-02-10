@@ -68,7 +68,7 @@ pub fn read_table_block(
     let cksum_slice =
         &combined_buf[data_size + table_builder::TABLE_BLOCK_COMPRESS_LEN..total_read_size];
 
-    let expected_cksum = unmask_crc(u32::decode_fixed(cksum_slice));
+    let expected_cksum = unmask_crc(u32::decode_fixed(cksum_slice).unwrap());
 
     if !verify_table_block(block_data_slice, compress_type, expected_cksum) {
         return err(
