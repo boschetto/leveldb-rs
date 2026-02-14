@@ -59,7 +59,7 @@ impl Env for PosixDiskEnv {
             })
             .map_err(|e| map_err_with_name("open (randomaccess)", p, e))
     }
-    fn open_writable_file(&self, p: &Path) -> Result<Box<dyn Write>> {
+    fn open_writable_file(&self, p: &Path) -> Result<Box<dyn Write + Send + Sync>> {
         Ok(Box::new(
             fs::OpenOptions::new()
                 .create(true)
@@ -70,7 +70,7 @@ impl Env for PosixDiskEnv {
                 .map_err(|e| map_err_with_name("open (write)", p, e))?,
         ))
     }
-    fn open_appendable_file(&self, p: &Path) -> Result<Box<dyn Write>> {
+    fn open_appendable_file(&self, p: &Path) -> Result<Box<dyn Write + Send + Sync>> {
         Ok(Box::new(
             fs::OpenOptions::new()
                 .create(true)

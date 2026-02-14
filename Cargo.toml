@@ -27,6 +27,7 @@ fs2 = { optional = true, version = "0.4.3" }
 
 tokio = { optional = true, features = ["rt", "sync"], version = "1.39.3" }
 async-std = { optional = true, version = "1.12.0" }
+lru = "0.16.3"
 
 [features]
 default = ["fs"]
@@ -38,11 +39,18 @@ fs = ["errno", "fs2"]
 [dev-dependencies]
 time-test = "0.3"
 bencher = "0.1"
+criterion = "0.5"
+tempfile = "3.10"
 
 [[bench]]
 name = "maps_bench"
 harness = false
 path = "src/benches/maps_bench.rs"
+
+[[bench]]
+name = "db_bench"
+harness = false
+path = "src/benches/db_bench.rs"
 
 [workspace]
 members = [

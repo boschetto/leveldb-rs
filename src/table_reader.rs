@@ -13,7 +13,7 @@ use crate::table_builder::{self, Footer};
 use crate::types::{current_key_val, LdbIterator, Shared};
 
 use std::cmp::Ordering;
-use std::rc::Rc;
+use std::sync::Arc;
 
 use bytes::Bytes;
 use integer_encoding::FixedIntWriter;
@@ -33,7 +33,7 @@ fn read_footer(f: &dyn RandomAccess, size: usize) -> Result<Footer> {
 
 #[derive(Clone)]
 pub struct Table {
-    file: Rc<Box<dyn RandomAccess>>,
+    file: Arc<Box<dyn RandomAccess>>,
     file_size: usize,
     cache_id: cache::CacheID,
 
@@ -50,7 +50,7 @@ impl Table {
     fn new_raw(
         opt: Options,
         block_cache: Shared<Cache<Block>>,
-        file: Rc<Box<dyn RandomAccess>>,
+        file: Arc<Box<dyn RandomAccess>>,
         size: usize,
     ) -> Result<Table> {
         let footer = read_footer(file.as_ref().as_ref(), size)?;
@@ -116,11 +116,11 @@ impl Table {
     pub fn new(
         mut opt: Options,
         block_cache: Shared<Cache<Block>>,
-        file: Rc<Box<dyn RandomAccess>>,
+        file: Arc<Box<dyn RandomAccess>>,
         size: usize,
     ) -> Result<Table> {
-        opt.cmp = Rc::new(Box::new(InternalKeyCmp(opt.cmp.clone())));
-        opt.filter_policy = Rc::new(Box::new(filter::InternalFilterPolicy::new(
+        opt.cmp = Arc::new(Box::new(InternalKeyCmp(opt.cmp.clone())));
+        opt.filter_policy = Arc::new(Box::new(filter::InternalFilterPolicy::new(
             opt.filter_policy,
         )));
         Table::new_raw(opt, block_cache, file, size)
@@ -441,7 +441,7 @@ mod tests {
         let mut opt = options::for_test();
         opt.block_restart_interval = 1;
         opt.block_size = 32;
-        opt.filter_policy = Rc::new(Box::new(BloomPolicy::new(4)));
+        opt.filter_policy = Arc::new(Box::new(BloomPolicy::new(4)));
 
         let mut i = 1_u64;
         let data: Vec<(Vec<u8>, &'static str)> = build_data()
@@ -468,8 +468,8 @@ mod tests {
         (d, size)
     }
 
-    fn wrap_buffer(src: Vec<u8>) -> Rc<Box<dyn RandomAccess>> {
-        Rc::new(Box::new(src))
+    fn wrap_buffer(src: Vec<u8>) -> Arc<Box<dyn RandomAccess>> {
+        Arc::new(Box::new(src))
     }
 
     #[test]
@@ -514,9 +514,8 @@ mod tests {
         }
 
         println!(
-            "weak = {}, strong = {}",
-            std::rc::Rc::<RefCell<cache::Cache<block::Block>>>::weak_count(&bc),
-            std::rc::Rc::<RefCell<cache::Cache<block::Block>>>::strong_count(&bc)
+            "weak = ?, strong = {}",
+            bc.strong_count()
         );
     }
 

@@ -28,7 +28,7 @@ fn get_default_options() -> Options {
     let mut opts = Options::default();
     #[cfg(feature = "fs")]
     {
-        opts.env = std::rc::Rc::new(Box::new(rusty_leveldb::PosixDiskEnv::new()));
+        opts.env = std::sync::Arc::new(Box::new(rusty_leveldb::PosixDiskEnv::new()));
     }
     opts.create_if_missing = true;
     opts
@@ -145,7 +145,7 @@ fn db_get_benchmark(c: &mut Criterion) {
                     fresh_db.flush().unwrap();
                     (fresh_db, key, fresh_temp_dir)
                 },
-                |(mut db, key_to_get, _temp_dir)| {
+                |(mut db, key_to_get, _temp_dir): (DB, _, _)| {
                     assert!(db.get(black_box(&key_to_get)).is_some());
                 },
                 BatchSize::SmallInput,
@@ -166,7 +166,7 @@ fn db_get_benchmark(c: &mut Criterion) {
                     fresh_db.flush().unwrap();
                     (fresh_db, non_existing_key.clone(), fresh_temp_dir)
                 },
-                |(mut db, key, _temp_dir)| {
+                |(mut db, key, _temp_dir): (DB, _, _)| {
                     assert!(db.get(black_box(&key)).is_none());
                 },
                 BatchSize::SmallInput,
@@ -214,7 +214,7 @@ fn db_delete_benchmark(c: &mut Criterion) {
                         db.flush().unwrap();
                         (db, key, fresh_temp_dir)
                     },
-                    |(mut db, key_to_delete, _temp_dir)| {
+                    |(mut db, key_to_delete, _temp_dir): (DB, _, _)| {
                         db.delete(black_box(&key_to_delete)).unwrap();
                     },
                     BatchSize::SmallInput,
@@ -338,7 +338,7 @@ fn db_iteration_benchmark(c: &mut Criterion) {
                         fresh_db.flush().unwrap();
                         (fresh_db, fresh_temp_dir) // Pass DB and temp_dir to the routine
                     },
-                    |(mut db, _temp_dir_to_drop)| {
+                    |(mut db, _temp_dir_to_drop): (DB, _)| {
                         // Routine: Iterate over the DB
                         let mut iter = db.new_iter().unwrap();
                         let mut count = 0;
@@ -422,7 +422,7 @@ fn db_snapshot_get_benchmark(c: &mut Criterion) {
                     // rusty_leveldb::DB::get_at takes &self.
                     (fresh_db, snapshot, key_to_get_from_snapshot, fresh_temp_dir)
                 },
-                |(mut db_instance, snapshot_instance, key, _temp_dir_to_drop)| {
+                |(mut db_instance, snapshot_instance, key, _temp_dir_to_drop): (DB, _, _, _)| {
                     // Routine
                     // Use db_instance and snapshot_instance
                     assert!(db_instance
@@ -501,7 +501,7 @@ fn db_compact_range_benchmark(c: &mut Criterion) {
                         fresh_db.flush().unwrap();
                         (fresh_db, fresh_temp_dir) // Pass DB and temp_dir
                     },
-                    |(db_ref, _temp_dir_to_drop)| {
+                    |(db_ref, _temp_dir_to_drop): &mut (DB, _)| {
                         // Routine (takes &mut (DB, TempDir))
                         if let (Some(f_key), Some(l_key)) =
                             (first_key_clone.as_ref(), last_key_clone.as_ref())

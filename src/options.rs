@@ -8,7 +8,7 @@ use crate::Result;
 use crate::{filter, Status, StatusCode};
 
 use std::default::Default;
-use std::rc::Rc;
+use std::sync::Arc;
 
 const KB: usize = 1 << 10;
 const MB: usize = KB * KB;
@@ -22,8 +22,8 @@ const DEFAULT_BITS_PER_KEY: u32 = 10; // NOTE: This may need to be optimized.
 /// self-explanatory; the defaults are defined in the `Default` implementation.
 #[derive(Clone)]
 pub struct Options {
-    pub cmp: Rc<Box<dyn Cmp>>,
-    pub env: Rc<Box<dyn Env>>,
+    pub cmp: Arc<Box<dyn Cmp>>,
+    pub env: Arc<Box<dyn Env>>,
     pub log: Option<Shared<Logger>>,
     pub create_if_missing: bool,
     pub error_if_exists: bool,
@@ -40,7 +40,7 @@ pub struct Options {
     /// order to not lose data! (this is a bug and will be fixed)
     pub compressor: u8,
 
-    pub compressor_list: Rc<CompressorList>,
+    pub compressor_list: Arc<CompressorList>,
     pub reuse_logs: bool,
     pub reuse_manifest: bool,
     pub filter_policy: filter::BoxedFilterPolicy,
@@ -55,8 +55,8 @@ type DefaultEnv = crate::mem_env::MemEnv;
 impl Default for Options {
     fn default() -> Options {
         Options {
-            cmp: Rc::new(Box::new(DefaultCmp)),
-            env: Rc::new(Box::new(DefaultEnv::new())),
+            cmp: Arc::new(Box::new(DefaultCmp)),
+            env: Arc::new(Box::new(DefaultEnv::new())),
             log: None,
             create_if_missing: true,
             error_if_exists: false,
@@ -70,8 +70,8 @@ impl Default for Options {
             reuse_logs: true,
             reuse_manifest: true,
             compressor: 0,
-            compressor_list: Rc::new(CompressorList::default()),
-            filter_policy: Rc::new(Box::new(filter::BloomPolicy::new(DEFAULT_BITS_PER_KEY))),
+            compressor_list: Arc::new(CompressorList::default()),
+            filter_policy: Arc::new(Box::new(filter::BloomPolicy::new(DEFAULT_BITS_PER_KEY))),
         }
     }
 }
@@ -135,14 +135,14 @@ impl Default for CompressorList {
 /// disk. This is useful for testing or ephemeral databases.
 pub fn in_memory() -> Options {
     Options {
-        env: Rc::new(Box::new(MemEnv::new())),
+        env: Arc::new(Box::new(MemEnv::new())),
         ..Options::default()
     }
 }
 
 pub fn for_test() -> Options {
     Options {
-        env: Rc::new(Box::new(MemEnv::new())),
+        env: Arc::new(Box::new(MemEnv::new())),
         log: Some(share(infolog::stderr())),
         ..Options::default()
     }

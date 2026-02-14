@@ -2,9 +2,9 @@
 
 use crate::error::{err, Result, StatusCode};
 
-use std::cell::RefCell;
+use std::sync::Arc;
 use std::path::Path;
-use std::rc::Rc;
+
 
 use bytes::Bytes;
 
@@ -16,10 +16,38 @@ pub type SequenceNumber = u64;
 pub const MAX_SEQUENCE_NUMBER: SequenceNumber = (1 << 56) - 1;
 
 /// A shared thingy with interior mutability.
-pub type Shared<T> = Rc<RefCell<T>>;
+use std::sync::{RwLock, RwLockReadGuard, RwLockWriteGuard};
 
-pub fn share<T>(t: T) -> Rc<RefCell<T>> {
-    Rc::new(RefCell::new(t))
+/// A shared thingy with interior mutability (thread-safe).
+#[derive(Debug)]
+pub struct Shared<T>(Arc<RwLock<T>>);
+
+impl<T> Clone for Shared<T> {
+    fn clone(&self) -> Self {
+        Shared(self.0.clone())
+    }
+}
+
+impl<T> Shared<T> {
+    pub fn new(t: T) -> Shared<T> {
+        Shared(Arc::new(RwLock::new(t)))
+    }
+
+    pub fn borrow(&self) -> RwLockReadGuard<T> {
+        self.0.read().expect("Shared lock poisoned")
+    }
+
+    pub fn borrow_mut(&self) -> RwLockWriteGuard<T> {
+        self.0.write().expect("Shared lock poisoned")
+    }
+
+    pub fn strong_count(&self) -> usize {
+        Arc::strong_count(&self.0)
+    }
+}
+
+pub fn share<T>(t: T) -> Shared<T> {
+    Shared::new(t)
 }
 
 #[derive(PartialEq)]

@@ -22,6 +22,7 @@
 //!
 
 #![allow(dead_code)]
+#![deny(unsafe_op_in_unsafe_fn)]
 
 #[cfg(feature = "fs")]
 extern crate errno;

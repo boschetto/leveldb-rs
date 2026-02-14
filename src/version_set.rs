@@ -17,14 +17,14 @@ use std::cmp::Ordering;
 use std::collections::HashSet;
 use std::io::Write;
 use std::path::{Path, PathBuf};
-use std::rc::Rc;
+use std::sync::Arc;
 
 pub struct Compaction {
     level: usize,
     max_file_size: usize,
     input_version: Option<Shared<Version>>,
     level_ixs: [usize; NUM_LEVELS],
-    cmp: Rc<Box<dyn Cmp>>,
+    cmp: Arc<Box<dyn Cmp>>,
     icmp: InternalKeyCmp,
 
     manual: bool,
@@ -180,7 +180,7 @@ pub struct VersionSet {
     current: Option<Shared<Version>>,
     compaction_ptrs: [Bytes; NUM_LEVELS],
 
-    descriptor_log: Option<LogWriter<Box<dyn Write>>>,
+    descriptor_log: Option<LogWriter<Box<dyn Write + Send + Sync>>>,
 }
 
 impl VersionSet {
@@ -736,7 +736,7 @@ impl VersionSet {
             }
         }
         assert!(iters.len() <= cap);
-        let cmp: Rc<Box<dyn Cmp>> = Rc::new(Box::new(self.cmp.clone()));
+        let cmp: Arc<Box<dyn Cmp>> = Arc::new(Box::new(self.cmp.clone()));
         Box::new(MergingIter::new(cmp, iters))
     }
 }
@@ -1230,7 +1230,7 @@ mod tests {
 
     /// iterator_properties tests that it contains len elements and that they are ordered in
     /// ascending order by cmp.
-    fn iterator_properties<It: LdbIterator>(mut it: It, len: usize, cmp: Rc<Box<dyn Cmp>>) {
+    fn iterator_properties<It: LdbIterator>(mut it: It, len: usize, cmp: Arc<Box<dyn Cmp>>) {
         let mut wr = LdbIteratorIter::wrap(&mut it);
         let first = wr.next().unwrap();
         let mut count = 1;
@@ -1295,7 +1295,7 @@ mod tests {
             iterator_properties(
                 vs.make_input_iterator(&c),
                 12,
-                Rc::new(Box::new(vs.cmp.clone())),
+                Arc::new(Box::new(vs.cmp.clone())),
             );
 
             // Expand input range on higher level.
@@ -1310,7 +1310,7 @@ mod tests {
             iterator_properties(
                 vs.make_input_iterator(&c),
                 12,
-                Rc::new(Box::new(vs.cmp.clone())),
+                Arc::new(Box::new(vs.cmp.clone())),
             );
 
             // is_trivial_move

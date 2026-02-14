@@ -1,6 +1,6 @@
 use std::io::{self, Write};
 
-pub struct Logger(pub Box<dyn Write>);
+pub struct Logger(pub Box<dyn Write + Send + Sync>);
 
 pub fn stderr() -> Logger {
     Logger(Box::new(io::stderr()))
